@@ -1,4 +1,11 @@
 
+
+# for this makefile to work, you'll need these:
+#
+# sudo apt-get install libboost-all-dev
+# sudo apt-get install libcgal-dev
+#
+
 # Add .d to Make's recognized suffixes.
 SUFFIXES += .d
 

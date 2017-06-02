@@ -3,8 +3,10 @@ delauney/delaunay3d
 delaunay_mst_3d/delaunay_mst_3d
 mst3d/mst3d
 boost_properties/in_algorithms
-boost_properties/struct_based
+boost_properties/adj_lists
 **.avi
 **.o
 **.d
 **vtk
+**#*#
+**.#*

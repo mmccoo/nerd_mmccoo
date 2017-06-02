@@ -1,4 +1,9 @@
 
+# for this makefile to work, you'll need these:
+#
+# sudo apt-get install libboost-all-dev
+#
+
 # Add .d to Make's recognized suffixes.
 SUFFIXES += .d
 
@@ -7,11 +12,11 @@ CXX = g++
 CFLAGS = -O3 -I. -std=c++14
 LFLAGS = 
 
-TARGETS = struct_based in_algorithms
+TARGETS = adj_lists in_algorithms
 
 all: $(TARGETS)
 
-struct_based: struct_based.o
+adj_lists: adj_lists.o
 in_algorithms: in_algorithms.o
 
 $(TARGETS):

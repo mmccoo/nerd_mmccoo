@@ -30,7 +30,7 @@ This directory combines the previous two programs into one. delaunay and mst
 
 # boost properties
 
-I have a [youtube tutorial]( describing some of the confusing ascpects of the boost graph library.
+I have a [youtube tutorial](https://www.youtube.com/watch?v=GSp2531Wti4) describing some of the confusing ascpects of the boost graph library.
 
 This directory contains examples that are intended to clarify the property mapping aspects of the boost graph library. BGL documentation does contain some examples of how to get data in and out of the various algorithms, but the examples given in this repo are intended to supplement that.
 

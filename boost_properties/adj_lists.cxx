@@ -9,6 +9,7 @@
 
 // the predefined property types are listed here:
 // http://www.boost.org/doc/libs/1_64_0/libs/graph/doc/using_adjacency_list.html#sec:adjacency-list-properties
+// http://www.boost.org/doc/libs/1_64_0/libs/graph/doc/bundles.html
 
 struct VertexData
 {
@@ -108,6 +109,7 @@ void example1()
 
   std::cout << "saved edge name " << G[e].edge_name << std::endl;
   std::cout << "edge name getter " << get(&EdgeData::edge_name, G)[e] << std::endl;
+  // add example using get to get the property value
   std::cout << "saved weight " << weightmap[e] << std::endl;
 
 

@@ -7,14 +7,17 @@ This repository holds the various sample codes for my nerd_mmccoo youtube channe
 
 Computation and visualization of 3D minumum spanning trees from random points.
 
+I have created several youtube tutorials with the examples in this repository which [can be found in this playlist](https://www.youtube.com/watch?v=vJ1dtSJKPGo&list=PL-u_1PaUdVKqpdIMFu7GLQNEJ1fOFg64r) including an introduction found [here](https://youtu.be/RN9i4QGoQ0M)
 
 # paraview_tutorial
 
-This directory contains the example data used in my paraview tutorial
+This directory contains the example data used in [my paraview youtube tutorial](https://youtu.be/mNR2Vn6r0io)
 
 # delaunay
 
 This directory contains the implementation of a basic computation of the delaunay triangulation. It reads vtk files (an import format of paraview) of points and writes a vtk of the resulting triangulation.
+
+I have a youtube tutorial [here](https://youtu.be/vJ1dtSJKPGo) 
 
 # mst3d
 
@@ -26,6 +29,8 @@ This directory contains an implementation of MST computation using the boost gra
 This directory combines the previous two programs into one. delaunay and mst
 
 # boost properties
+
+I have a [youtube tutorial]( describing some of the confusing ascpects of the boost graph library.
 
 This directory contains examples that are intended to clarify the property mapping aspects of the boost graph library. BGL documentation does contain some examples of how to get data in and out of the various algorithms, but the examples given in this repo are intended to supplement that.
 

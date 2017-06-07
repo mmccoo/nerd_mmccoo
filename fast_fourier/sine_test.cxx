@@ -33,15 +33,19 @@ int main(int argc, char** argv) {
   }
 
   // http://www.fftw.org/fftw3_doc/Complex-One_002dDimensional-DFTs.html#Complex-One_002dDimensional-DFTs
-  fftw_complex *in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * numsamples);
-  fftw_complex *out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * numsamples);
-  fftw_plan p = fftw_plan_dft_1d(numsamples, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+  std::complex<double> *in  = (std::complex<double>*) fftw_malloc(sizeof(fftw_complex) * numsamples);
+  std::complex<double> *out = (std::complex<double>*) fftw_malloc(sizeof(fftw_complex) * numsamples);
+  fftw_plan p = fftw_plan_dft_1d(numsamples,
+                                 reinterpret_cast<fftw_complex*>(in),
+                                 reinterpret_cast<fftw_complex*>(out),
+                                 FFTW_FORWARD,  FFTW_ESTIMATE);
 
   double samples[numsamples*sfinfo.channels];
 
   for(int i=0; i<numsamples; i++) {
-    samples[i*sfinfo.channels]   = in[i][0] = sin(2*M_PI*freq*i/sfinfo.samplerate);
-    samples[i*sfinfo.channels+1] = in[i][1] = 0;
+    in[i] = sin(2*M_PI*freq*i/sfinfo.samplerate);
+    samples[i*sfinfo.channels]   = in[i].real();
+    samples[i*sfinfo.channels+1] = in[i].imag();
   }
 
   auto begin = std::chrono::high_resolution_clock::now();
@@ -49,26 +53,15 @@ int main(int argc, char** argv) {
   auto end = std::chrono::high_resolution_clock::now();
   std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count()/1000000000.0 << "ns" << std::endl;
 
-  double minval = 0;
-  int minid=0;
-  double maxval = 0;
-  int maxid=0;
+  // freq corresponds to i*samplerate/numsamples. if numsamples=2*samplerate, f=i/2.
   for(int i=0; i<numsamples; i++) {
-    samples[i*sfinfo.channels+2] = out[i][0];
-    samples[i*sfinfo.channels+3] = out[i][1];
-    if (std::min(out[i][0], out[i][1]) < minval) {
-      minval = std::min(out[i][0], out[i][1]);
-      minid = i;
-    }
-    if (std::max(out[i][0], out[i][1]) > maxval) {
-      maxval = std::max(out[i][0], out[i][1]);
-      maxid = i;
+    samples[i*sfinfo.channels+2] = out[i].real();
+    samples[i*sfinfo.channels+3] = out[i].imag();
+    if (std::abs(out[i]) > 10) {
+      std::cout << "at " << i << "(" << double(i)*samplerate/numsamples << "Hz) " << out[i] << std::endl;
     }
   }
 
-  // freq corresponds to i*samplerate/numsamples. if numsamples=2*samplerate, f=i/2.
-  std::cout << "min " << minval << "(" << double(minid)*samplerate/numsamples << ") max ";
-  std::cout << maxval << "(" << double(maxid)*samplerate/numsamples << ")" << std::endl;
   std::cout << "num samples " << numsamples << std::endl;
   sf_writef_double(sfile, samples, numsamples);
   

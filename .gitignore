@@ -4,9 +4,16 @@ delaunay_mst_3d/delaunay_mst_3d
 mst3d/mst3d
 boost_properties/in_algorithms
 boost_properties/adj_lists
+fast_fourier/sine_test
+soundfile/sine_test
+soundfile/getwavprops
 **.avi
 **.o
 **.d
 **vtk
 **#*#
 **.#*
+**libsndfile-1.0.28.tar.gz
+**libsndfile-1.0.28
+**fftw-3.3.6-pl2.tar.gz
+**fftw-3.3.6-pl2

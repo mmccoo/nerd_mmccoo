@@ -23,7 +23,7 @@ CFLAGS += $(shell export PKG_CONFIG_PATH=$(FFTW_PATH) && pkg-config --cflags fft
 LFLAGS += $(shell PKG_CONFIG_PATH=$(FFTW_PATH)    && pkg-config --libs fftw3)
 
 
-TARGETS = sine_test
+TARGETS = sine_test basic_convolution
 
 all: $(TARGETS)
 
@@ -55,6 +55,7 @@ clean:
 test: $(TARGETS)
 	# generate a 1k sine wav and the the fft of it. The results go into channels 3 (R) and 4 (I).
 	./sine_test sine.wav
+	./basic_convolution conv1.wav
 
 
 # pull in dependency info for *existing* .o files

@@ -5,6 +5,7 @@ mst3d/mst3d
 boost_properties/in_algorithms
 boost_properties/adj_lists
 fast_fourier/sine_test
+fast_fourier/basic_convolution
 soundfile/sine_test
 soundfile/getwavprops
 **.avi

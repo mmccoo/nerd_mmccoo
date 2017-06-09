@@ -28,6 +28,8 @@ TARGETS = xmltest sync_wavs varianceexample
 
 all: $(TARGETS)
 
+sync_wavs: wav_utils.o
+
 
 $(TARGETS): %: %.o ../dependencies/libsndfile-1.0.28/install/lib/libsndfile.a ../dependencies/fftw-3.3.6-pl2/install/lib/libfftw3.a ../dependencies/tinyxml2/libtinyxml2.a
 	$(CXX) -o $@ $^  $(LFLAGS)

@@ -11,17 +11,18 @@
 #include <boost/accumulators/statistics.hpp>
 
 // read a wav file and put the file's properties into wav samples
-wav_samples
-read_wav(const char *filename)
+bool
+read_wav(wav_samples& ws)
 {
   // http://www.mega-nerd.com/libsndfile/api.html#open
   // When opening a file for read, the format field should be set to zero before calling sf_open().
   SF_INFO sfinfo;
   sfinfo.format = 0x0;
-  
-  SNDFILE* sfile = sf_open(filename, SFM_READ, &sfinfo);
+
+  std::cout << "reading wav " << ws.filename << std::endl;
+  SNDFILE* sfile = sf_open(ws.filename.c_str(), SFM_READ, &sfinfo);
   if (sfile == NULL) {
-    std::cout << "unable to open file " << filename << std::endl;
+    std::cout << "unable to open file " << ws.filename << std::endl;
     std::cout << "error " << sf_strerror(sfile) << std::endl;
     exit(-1);
   }
@@ -33,7 +34,12 @@ read_wav(const char *filename)
   double *samples = (double*) malloc(sizeof(double)*sfinfo.frames*sfinfo.channels);
   sf_readf_double(sfile, samples, sfinfo.frames);
 
-  return {sfinfo.channels, sfinfo.frames, sfinfo.samplerate, samples};
+  ws.channels = sfinfo.channels;
+  ws.frames = sfinfo.frames;
+  ws.samplerate = sfinfo.samplerate;
+  ws.samples = samples;
+  
+  return true;
 }
 
 // now that we know how long of a fft we want, do it on one set of data.
@@ -52,7 +58,7 @@ add_fft(wav_samples& ws, long int fftsize)
                                            FFTW_FORWARD, FFTW_ESTIMATE);
 
   auto end = std::chrono::high_resolution_clock::now();
-  std::cout << "create plan " << std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count()/1000000000.0 << "sec ";
+  std::cout << "create plan " << std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count()/1000000000.0 << " sec ";
   begin = std::chrono::high_resolution_clock::now();
 
   
@@ -75,26 +81,26 @@ add_fft(wav_samples& ws, long int fftsize)
   // don't free out. it's returned as part of ws.
 }
 
-void write_wav(double* samples,
+void write_wav(std::vector<double>& samples,
                long int length,
                int samplerate,
                int channels,
-               const char* filename)
+               const std::string &filename)
 {
   SF_INFO sfinfo;
   // http://www.mega-nerd.com/libsndfile/api.html#open
   sfinfo.format = SF_FORMAT_WAV|SF_FORMAT_PCM_16;
   sfinfo.samplerate = samplerate;
-  sfinfo.channels = 2;
+  sfinfo.channels = channels;
 
   std::cout << "writing wav " << filename << std::endl;
-  SNDFILE* sfile = sf_open(filename, SFM_WRITE, &sfinfo);
+  SNDFILE* sfile = sf_open(filename.c_str(), SFM_WRITE, &sfinfo);
   if (sfile == NULL) {
     std::cout << "unable to open file " << filename << std::endl;
     std::cout << "error " << sf_strerror(sfile) << std::endl;
     exit(-1);
   }
-  sf_writef_double(sfile, samples, length);
+  sf_writef_double(sfile, samples.data(), length);
   sf_close(sfile);
 }
 
@@ -107,7 +113,7 @@ void write_wav_for_fft(std::complex<double> *fft,
   // use malloc instead of stack array (ie samples[numsamples*channel]) as this will likely
   // exceed stack size limit.
   const int channels = 2;
-  double* samples = (double*) malloc(fftsize*channels*sizeof(double));
+  std::vector<double> samples(fftsize*channels,0);
 
   // first need to find the right scale factor.
   double maxval=0;
@@ -126,11 +132,11 @@ void write_wav_for_fft(std::complex<double> *fft,
             filename);
 }
 
-using namespace boost::accumulators;
-int correlate_wavs(wav_samples& ws1,
-                   wav_samples& ws2,
-                   long int     fftsize,
-                   int          samplerate)
+correlation_data
+correlate_wavs(wav_samples& ws1,
+               wav_samples& ws2,
+               long int     fftsize,
+               int          samplerate)
 {
   std::complex<double> *in  = (std::complex<double>*) fftw_malloc(sizeof(std::complex<double>) * fftsize);
   std::complex<double> *out = (std::complex<double>*) fftw_malloc(sizeof(std::complex<double>) * fftsize);
@@ -146,59 +152,45 @@ int correlate_wavs(wav_samples& ws1,
   }
   fftw_execute(p_backward);
 
-  double sum=0;
-  boost::accumulators::accumulator_set< double, boost::accumulators::stats<boost::accumulators::tag::variance> > acc_variance;
-  boost::accumulators::accumulator_set< double, boost::accumulators::stats<boost::accumulators::tag::max> > acc_max;
+  boost::accumulators::accumulator_set< double,
+                                        boost::accumulators::features<
+                                          boost::accumulators::stats<boost::accumulators::tag::variance,
+                                                                     boost::accumulators::tag::max> > > acc;
  
   //accumulator_set<int, stats<tag::variance> > acc2;
+  int maxid = 0;
   for (int i=0; i<fftsize; i++) {
     double mag = std::abs(out[i]);
-    sum+= std::abs(out[i]);   
-    acc_variance(mag);
-    acc_max(mag);
+    acc(mag);
+    if (mag == boost::accumulators::max(acc)) { maxid = i; }
   }
 
-#if 0
-  std::cout  << boost::format("mean %8d variance %8d max %8d num_std %d")
-    % boost::accumulators::mean(acc_variance)
-    % sqrt(boost::accumulators::variance(acc_variance))
-    % boost::accumulators::max(acc_max)
-    % ((boost::accumulators::max(acc_max)-boost::accumulators::mean(acc_variance))/sqrt(boost::accumulators::variance(acc_variance)))
-            << std::fixed << std::endl;
-#endif
-#if 1
-  std::cout << std::fixed << std::setprecision(2)
-            << "mean "       << std::setw(14) << std::right << boost::accumulators::mean(acc_variance)
-            << "\tvariance " << std::setw(14) << std::right << sqrt(boost::accumulators::variance(acc_variance))
-            << "\tmax "      << std::setw(14) << std::right << boost::accumulators::max(acc_max)
-            << "\tnum std "  << std::setw(14) << std::right << (boost::accumulators::max(acc_max)-boost::accumulators::mean(acc_variance))/sqrt(boost::accumulators::variance(acc_variance)) << std::endl;
-#endif
+  double num_std = (boost::accumulators::max(acc)-
+                    boost::accumulators::mean(acc))/sqrt(boost::accumulators::variance(acc));
   
+  std::cout << std::fixed << std::setprecision(2)
+            << ws1.filename << " " << ws2.filename
+            << " mean "      << std::setw(14) << std::right << boost::accumulators::mean(acc)
+            << "\tvariance " << std::setw(14) << std::right << sqrt(boost::accumulators::variance(acc))
+            << "\tmax "      << std::setw(14) << std::right << boost::accumulators::max(acc)
+            << "\tnum std "  << std::setw(14) << std::right << num_std << std::endl;
+
+#if 0
   write_wav_for_fft(out,
                     fftsize,
                     samplerate,
                     "correlate.wav");
-
-  double maxval=0;
-  double maxid=0;
-  for(int i=0; i<fftsize; i++) {
-    double val = std::abs(out[i]);
-    if (val > maxval) {
-      maxval = val;
-      maxid = i;
-    }
-  }
-
-  std::cout << "average: " << sum/fftsize << " max val " << maxval << " ratio " << maxval/sum*fftsize << std::endl;
-  
+#endif
+    
   // the max correlation id will be positive if the first input ahead of the second.
   // this doesn't appear to really be true. rather, it's the reverse.
   // ie if in1(t) ~= in2(t+maxcorrel_id)
+
   if (maxid>fftsize/2) {
-    // want a negative number
-    return maxid-fftsize;
+    // the order to correlation data matters.
+    return correlation_data(&ws1, &ws2, fftsize-maxid, num_std);
   } else {
-    return maxid;
+    return correlation_data(&ws2, &ws1, maxid,         num_std);
   }
 }
 

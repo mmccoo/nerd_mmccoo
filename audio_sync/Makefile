@@ -12,7 +12,7 @@ SUFFIXES += .d
 CXX = g++
 
 
-CFLAGS = -g -I. -std=c++14 -I../dependencies/tinyxml2
+CFLAGS = -O3 -I. -std=c++14 -I../dependencies/tinyxml2
 
 # to get the dependencies, cd to ../dependencies and do make all
 SNDFILE_PATH=../dependencies/libsndfile-1.0.28/install/lib/pkgconfig
@@ -24,12 +24,12 @@ CFLAGS += $(shell export PKG_CONFIG_PATH=$(FFTW_PATH) && pkg-config --cflags fft
 LFLAGS += $(shell export PKG_CONFIG_PATH=$(FFTW_PATH) && pkg-config --libs fftw3)
 
 
-TARGETS = xmltest sync_wavs varianceexample
+TARGETS = xmltest sync_wavs varianceexample sync_audio
 
 all: $(TARGETS)
 
 sync_wavs: wav_utils.o
-
+sync_audio: wav_utils.o
 
 $(TARGETS): %: %.o ../dependencies/libsndfile-1.0.28/install/lib/libsndfile.a ../dependencies/fftw-3.3.6-pl2/install/lib/libfftw3.a ../dependencies/tinyxml2/libtinyxml2.a
 	$(CXX) -o $@ $^  $(LFLAGS)

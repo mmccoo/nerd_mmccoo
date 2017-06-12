@@ -11,6 +11,7 @@ soundfile/getwavprops
 audio_sync/*.wav
 audio_sync/varianceexample
 audio_sync/sync_wavs
+audio_sync/sync_audio
 audio_sync/xmltest
 **.avi
 **.o

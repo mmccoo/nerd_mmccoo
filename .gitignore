@@ -13,6 +13,7 @@ audio_sync/varianceexample
 audio_sync/sync_wavs
 audio_sync/sync_audio
 audio_sync/xmltest
+audio_sync/sync_kdenlive
 **.avi
 **.o
 **.d

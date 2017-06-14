@@ -9,6 +9,7 @@
 
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
+#include <boost/foreach.hpp>
 
 // read a wav file and put the file's properties into wav samples
 bool
@@ -194,3 +195,30 @@ correlate_wavs(wav_samples& ws1,
   }
 }
 
+
+std::ostream&
+operator<< (std::ostream& stream,
+            Timeline& tl)
+{
+  stream << "timeline \n";
+  BOOST_FOREACH(auto cl, tl.getClips()) {
+    stream << "  " << cl.wss->filename << ":" << cl.offset/cl.wss->samplerate << std::endl;
+  }
+
+  return stream;
+}
+
+void
+mergeTimelines(std::shared_ptr<Timeline> tl1,
+               std::shared_ptr<Timeline> tl2,
+               long int offset) {
+  
+  std::cout << "merging " << *tl1 << " with " << *tl2 << "    offset " << offset/double(tl1->getClips().begin()->wss->samplerate) << std::endl;
+
+  BOOST_FOREACH(Timeline::clip c, tl2->getClips()) {
+    tl1->addClip(c.wss, c.offset+offset);
+    c.wss->timeline = tl1;
+  }
+
+  tl2->getClips().clear();
+}

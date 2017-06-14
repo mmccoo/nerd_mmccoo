@@ -1,79 +1,112 @@
 
 
+#include <kdenlive_utils.hxx>
 #include <wav_utils.hxx>
-
+#include <stdlib.h>
+#include <set>
+#include <boost/foreach.hpp>
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
-#include <boost/foreach.hpp>
-#include <boost/optional.hpp>
-
-#include <iostream>
-#include <algorithm>
-#include <chrono>
-#include <set>
-
-///stats.hpp>
-//#include <boost/accumulators/statistics/mean.hpp>
-//#include <boost/accumulators/statistics/variance.hpp>
-
-// this program is a lot like sync_wavs.cxx
-// in this one, I read a bunch of wav files and find the points of maximum correlation.
-
-// ffmpeg -i sample_video/htc/VIDEO0635.mp4 -map 0:a -ac 1 tmp/htc.wav
-// ffmpeg -i sample_video/s5/VID_20170608_152423.mp4 -map 0:a tmp/s5.wav
-// find . | xargs -I file ffmpeg -i file -map 0:a -ac 1 -ar 10000 -y ../tmp10k/file
-
-// https://en.wikipedia.org/wiki/Cross-correlation
+#include <libgen.h>
+#include <unistd.h>
 
 int main(int argc, char** argv) {
-
-  if (argc < 3) {
-    std::cerr << "need at least two wav filenames" << std::endl;
+  if (argc < 2) {
+    std::cerr << "need filename" << std::endl;
     exit(-1);
   }
+
+  std::string filename(argv[1]);
+  char path[filename.size()+1];
+  strcpy(path, filename.c_str());
+  std::string kdendir = dirname(path);
+  
+  tinyxml2::XMLDocument doc;
+  doc.LoadFile(filename.c_str());
+
+#if 0
+  std::cout << "chaning to dir: " << kdendir << std::endl;
+  if (chdir(kdendir.c_str())) {
+    std::cout << "unable to change to dir " << path << std::endl;
+    exit(-1);
+  }
+#endif
+  
+  kdenlive_data kdata;
+  doc.Accept(&kdata);
 
   boost::accumulators::accumulator_set<long int, boost::accumulators::features<boost::accumulators::tag::variance,
                                                                                boost::accumulators::tag::max,
                                                                                boost::accumulators::tag::min> > acc;
- 
+  
+  std::vector<wav_samples> clips;
+  std::set<std::string> producers;
 
-  std::vector<wav_samples> wss;
-  for(int i=1; i<argc; i++) {
-    wss.push_back(wav_samples());
-    wss[i-1].filename = argv[i];
-    read_wav(wss[i-1]);
-    acc(wss[i-1].frames);
+  std::cout << "getting track resources" << std::endl;
+  BOOST_FOREACH(auto &track, kdata.GetTracks()) {
+    std::cout << "track " << track.GetName() << std::endl;
+
+    BOOST_FOREACH(auto &entry, track.GetEntries()) {
+      if (producers.find(entry.producer) != producers.end()) {
+        continue;
+      }
+      std::cout << "clip " << entry.producer << "(" << entry.resource << ")" << std::endl;
+      wav_samples wss;
+      wss.producer = entry.producer;
+      wss.resource = kdendir + "/" + entry.resource;
+      wss.td = &track;
+
+      char tmp[] = "convertedXXXXXX.wav";
+      int fp = mkstemps(tmp, 4);
+      wss.filename = kdendir + "/" + tmp;
+      close(fp);
+      std::string cmd = std::string("ffmpeg -i ") + wss.resource + " -map 0:a -ac 1 -ar 5000 -y " + wss.filename;
+      std::cout << "executing " << cmd << std::endl;
+      if (std::system(cmd.c_str())) {
+        std::cerr << "got non-zero when running " << cmd << std::endl;
+      }
+    
+      read_wav(wss);
+
+      std::remove(wss.filename.c_str());
+    
+      acc(wss.frames);
+
+      clips.push_back(wss);
+    }
   }
-
+  
   std::cout << "mean " << boost::accumulators::mean(acc)
             << " variance " << sqrt(boost::accumulators::variance(acc))
             << " max " << boost::accumulators::max(acc)
             << " min " << boost::accumulators::min(acc)
             << std::endl;
   
-  std::sort(wss.begin(), wss.end(),
+  std::sort(clips.begin(), clips.end(),
         [] (const wav_samples& struct1, const wav_samples& struct2)
         {
             return (struct1.frames > struct2.frames);
         }
     );
 
+  
+  
   // I multiple by two so I can tell the different between a shifted after b and
   // b shifted after a.
   int fftsize = boost::accumulators::max(acc)*2;
   std::cout << "need fft size of " << fftsize << std::endl;
 
   mytimer mt;
-  BOOST_FOREACH(wav_samples& ws, wss) {
-    add_fft(ws, fftsize);
+  BOOST_FOREACH(auto &res, clips) {
+    add_fft(res, fftsize);
   }
   std::cout << "time for all ffts " << mt.duration() << std::endl;
 
   std::vector<correlation_data> correlations;
   mt.reset();
-  for(int i=0; i<wss.size(); i++) {
-    for (int j=i+1; j<wss.size(); j++) {
-      correlation_data cd = correlate_wavs(wss[i], wss[j], fftsize, wss[i].samplerate);
+  for(int i=0; i<clips.size(); i++) {
+    for (int j=i+1; j<clips.size(); j++) {
+      correlation_data cd = correlate_wavs(clips[i], clips[j], fftsize, clips[i].samplerate);
       //std:: cout << wss[i].filename << " " << wss[j].filename << " offset " << offset << " num std " << num_std << std::endl;
       correlations.push_back(cd);
     }
@@ -84,7 +117,6 @@ int main(int argc, char** argv) {
       return t1.num_std > t2.num_std;
     });
 
-  
   for(int i=0; i<correlations.size(); i++) {
     std:: cout << correlations[i].wss1->filename << " " << correlations[i].wss2->filename << " offset " << correlations[i].offset/double(correlations[i].wss1->samplerate) << " num std " << correlations[i].num_std << std::endl;
 
@@ -129,8 +161,9 @@ int main(int argc, char** argv) {
   }
 
   std::set<std::shared_ptr<Timeline> > timelines;
-  BOOST_FOREACH(wav_samples& ws, wss) {
-    timelines.insert(ws.timeline);
+  BOOST_FOREACH(auto &res, clips) {
+    timelines.insert(res.timeline);
+    res.td->ClearEntriesAndBlanks();
   }
 
   std::cout << "num timelines " << timelines.size() << std::endl;
@@ -139,15 +172,39 @@ int main(int argc, char** argv) {
     std::cout << "timeline" << std::endl;
     long int length = 0;
     int samplerate = 0;
+
+    // compute the overall length needed to save all of the aligned clips.
     BOOST_FOREACH(auto clip, tl->getClips()) {
       std:: cout << "  " << clip.wss->filename << " offset " << clip.offset << std::endl;
       length = std::max(length, clip.wss->frames+clip.offset);
       samplerate = clip.wss->samplerate;
     }
-    const int channels = wss.size();
+
+    // here we put everything back together.
+    const int channels = tl->getClips().size();
     std::vector<double> samples(length*channels, 0);
     int clipnum=0;
     BOOST_FOREACH(auto clip, tl->getClips()) {
+      // the offset and samplerate are both of the downsampled version.
+      std::cout << clip.wss->td->GetName() << " "
+                << clip.wss->producer << "(" << clip.wss->resource << ") offset "
+                << clip.offset/double(clip.wss->samplerate)
+                << " duration " << clip.wss->frames/double(clip.wss->samplerate) << std::endl;
+
+      const double fps = 30.0;
+      int frame_offset = round(clip.offset/double(clip.wss->samplerate)*fps);
+      frame_offset = std::max(frame_offset, clip.wss->td->GetLastPosition());
+
+      if (frame_offset > clip.wss->td->GetLastPosition()) {
+        clip.wss->td->AddBlank(frame_offset-clip.wss->td->GetLastPosition());
+        clip.wss->td->SetLastPosition(frame_offset);
+      }
+
+      int frame_end = round((clip.offset+clip.wss->frames)/double(clip.wss->samplerate)*fps);
+      tinyxml2::XMLElement* entry = clip.wss->td->AddEntry(0, frame_end-frame_offset, clip.wss->producer);
+      clip.wss->td->AddZoomPan(entry, clip.wss->td->GetId());
+      clip.wss->td->SetLastPosition(frame_end);
+      
       for(int i=0; i<clip.wss->frames; i++) {
         samples[(i+clip.offset)*channels+clipnum] = clip.wss->samples[i];
       }
@@ -157,5 +214,8 @@ int main(int argc, char** argv) {
     write_wav(samples, length, samplerate, channels, std::string("aligned") + std::to_string(tlnum) + ".wav");
     tlnum++;
   }
+
+  
+  doc.SaveFile((filename + std::string(".new")).c_str());
 
 }

@@ -7,8 +7,27 @@
 #include <list>
 #include <vector>
 #include <memory>
+#include <cassert>
+#include <chrono>
+
+class mytimer {
+public:
+  mytimer() { reset(); }
+  void reset() { begin = std::chrono::high_resolution_clock::now(); }
+
+  double duration() {
+    auto end = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count()/1000000000.0;
+  }
+  
+private:
+  std::chrono::time_point<std::chrono::system_clock> begin;
+};
+
+
 
 class Timeline;
+class track_data;
 struct wav_samples {
   wav_samples() : channels(0), frames(0), samplerate(0), samples(0x0), fft(0x0), timeline(0x0) { /* empty */ };
   int                        channels;
@@ -18,6 +37,12 @@ struct wav_samples {
   std::complex<double> *     fft;
   std::string                filename;
   std::shared_ptr<Timeline>  timeline;
+
+  // stuff needed in kdenlive context.
+  std::string producer;
+  std::string resource; // this could be the same as filename except filename will be a downsampled version.
+  track_data *td;
+
 };
 
 struct correlation_data {
@@ -31,7 +56,44 @@ struct correlation_data {
   
 };
 
+class res_info;
+class Timeline {
+public:
+  struct clip {
+    wav_samples* wss;
+    long int     offset;    
+  };
 
+  void addClip(wav_samples* wss,
+               long int     offset) {
+    assert(wss->timeline.get() != this);
+
+    auto iter = clips.begin();
+    for(/*empty*/; iter !=  clips.end(); iter++) {
+      if ((*iter).offset > offset) {
+        break;
+      }
+    }
+
+    clips.insert(iter, {wss, offset});
+  }
+
+  long int wsOffset(wav_samples* wss) {
+    for(auto iter = clips.begin(); iter !=  clips.end(); iter++) {
+      if ((*iter).wss == wss) {
+        return (*iter).offset;        
+      }
+    }
+    // shouldn't be here. Why didn't we find wss?
+    assert(0);
+    return 0;
+  }
+  
+  std::list<clip>& getClips() { return clips; }
+  
+private:
+  std::list<clip> clips;
+};
 
 
 bool read_wav(wav_samples& ws);
@@ -53,5 +115,13 @@ correlate_wavs(wav_samples& ws1,
                long int     fftsize,
                int          samplerate);
 
+
+std::ostream&
+operator<< (std::ostream& stream, Timeline& tl);
+
+void
+mergeTimelines(std::shared_ptr<Timeline> tl1,
+               std::shared_ptr<Timeline> tl2,
+               long int offset);
 
 #endif

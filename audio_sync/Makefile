@@ -24,12 +24,14 @@ CFLAGS += $(shell export PKG_CONFIG_PATH=$(FFTW_PATH) && pkg-config --cflags fft
 LFLAGS += $(shell export PKG_CONFIG_PATH=$(FFTW_PATH) && pkg-config --libs fftw3)
 
 
-TARGETS = xmltest sync_wavs varianceexample sync_audio
+TARGETS = xmltest sync_wavs varianceexample sync_audio sync_kdenlive
 
 all: $(TARGETS)
 
 sync_wavs: wav_utils.o
 sync_audio: wav_utils.o
+xmltest: kdenlive_utils.o
+sync_kdenlive: kdenlive_utils.o wav_utils.o
 
 $(TARGETS): %: %.o ../dependencies/libsndfile-1.0.28/install/lib/libsndfile.a ../dependencies/fftw-3.3.6-pl2/install/lib/libfftw3.a ../dependencies/tinyxml2/libtinyxml2.a
 	$(CXX) -o $@ $^  $(LFLAGS)

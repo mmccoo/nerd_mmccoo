@@ -21,9 +21,9 @@ fftw-3.3.6-pl2/install/lib/libfftw3.a:
 
 tinyxml2/libtinyxml2.a:
 	mkdir -p ../dependencies
-	cd git clone https://github.com/leethomason/tinyxml2.git
+	git clone https://github.com/leethomason/tinyxml2.git
 	cd tinyxml2 && make
-	doxygen dox
+	cd tinyxml2 && doxygen dox
 
 clean:
 	rm -rf libsndfile-1.0.28*

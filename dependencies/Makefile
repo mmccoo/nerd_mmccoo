@@ -1,7 +1,7 @@
 
 $(info in depdencies makefile)
 
-all: libsndfile-1.0.28/install/lib/libsndfile.a fftw-3.3.6-pl2/install/lib/libfftw3.a tinyxml2/libtinyxml2.a
+all: libsndfile-1.0.28/install/lib/libsndfile.a fftw-3.3.6-pl2/install/lib/libfftw3.a tinyxml2/libtinyxml2.a boost_1_63_0
 
 
 libsndfile-1.0.28/install/lib/libsndfile.a:
@@ -24,6 +24,10 @@ tinyxml2/libtinyxml2.a:
 	git clone https://github.com/leethomason/tinyxml2.git
 	cd tinyxml2 && make
 	cd tinyxml2 && doxygen dox
+
+boost_1_63_0:
+	wget https://dl.bintray.com/boostorg/release/1.63.0/source/boost_1_63_0.tar.bz2
+	tar --bzip2 -xf boost_1_63_0.tar.bz2
 
 clean:
 	rm -rf libsndfile-1.0.28*

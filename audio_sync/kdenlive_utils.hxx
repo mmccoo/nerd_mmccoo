@@ -54,6 +54,15 @@ public:
       playlist->DeleteChild(todelete);
     };
   }
+
+  void Print() {
+    std::cout << GetName() << std::endl;
+    tinyxml2::XMLPrinter printer;
+    playlist->Accept(&printer);
+    std::cout << printer.CStr();
+    
+  }
+  
 private:
   int                   last_position;
   tinyxml2::XMLElement* element;

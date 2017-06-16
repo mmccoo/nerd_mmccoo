@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
       wss.producer = entry.producer;
       wss.resource = kdendir + "/" + entry.resource;
       wss.td = &track;
-
+      
       char tmp[] = "convertedXXXXXX.wav";
       int fp = mkstemps(tmp, 4);
       wss.filename = kdendir + "/" + tmp;
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
       clips.push_back(wss);
     }
   }
-  
+
   std::cout << "mean " << boost::accumulators::mean(acc)
             << " variance " << sqrt(boost::accumulators::variance(acc))
             << " max " << boost::accumulators::max(acc)
@@ -104,8 +104,8 @@ int main(int argc, char** argv) {
 
   std::vector<correlation_data> correlations;
   mt.reset();
-  for(int i=0; i<clips.size(); i++) {
-    for (int j=i+1; j<clips.size(); j++) {
+  for(unsigned int i=0; i<clips.size(); i++) {
+    for (unsigned int j=i+1; j<clips.size(); j++) {
       correlation_data cd = correlate_wavs(clips[i], clips[j], fftsize, clips[i].samplerate);
       //std:: cout << wss[i].filename << " " << wss[j].filename << " offset " << offset << " num std " << num_std << std::endl;
       correlations.push_back(cd);
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
       return t1.num_std > t2.num_std;
     });
 
-  for(int i=0; i<correlations.size(); i++) {
+  for(unsigned int i=0; i<correlations.size(); i++) {
     std:: cout << correlations[i].wss1->filename << " " << correlations[i].wss2->filename << " offset " << correlations[i].offset/double(correlations[i].wss1->samplerate) << " num std " << correlations[i].num_std << std::endl;
 
     correlation_data cd = correlations[i];

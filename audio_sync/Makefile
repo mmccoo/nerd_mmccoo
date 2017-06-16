@@ -1,10 +1,15 @@
 
+# for sync_kdenlive to work, you have to have ffmpeg installed
 
 # for this makefile to work, you'll need these:
 #
 # sudo apt-get install libboost-all-dev
 # sudo apt-get install libcgal-dev
 #
+# OR
+#
+# in ../dependencies of this repository, do
+# make and it'll get boost for you
 
 # Add .d to Make's recognized suffixes.
 SUFFIXES += .d
@@ -12,7 +17,8 @@ SUFFIXES += .d
 CXX = g++
 
 
-CFLAGS = -O3 -I. -std=c++14 -I../dependencies/tinyxml2
+# I'm using isystem for boost to avoid warnings that originate from there.
+CFLAGS = -Wall -g -I. -std=c++14 -I../dependencies/tinyxml2 -isystem../dependencies/boost_1_63_0
 
 # to get the dependencies, cd to ../dependencies and do make all
 SNDFILE_PATH=../dependencies/libsndfile-1.0.28/install/lib/pkgconfig
@@ -34,7 +40,7 @@ xmltest: kdenlive_utils.o
 sync_kdenlive: kdenlive_utils.o wav_utils.o
 
 $(TARGETS): %: %.o ../dependencies/libsndfile-1.0.28/install/lib/libsndfile.a ../dependencies/fftw-3.3.6-pl2/install/lib/libfftw3.a ../dependencies/tinyxml2/libtinyxml2.a
-	$(CXX) -o $@ $^  $(LFLAGS)
+	$(CXX) -o $@ $^ $(LFLAGS)
 
 
 %.o: %.cxx

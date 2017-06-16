@@ -24,10 +24,6 @@
 int main(int argc, char** argv) {
 
   const int samplerate = 44100;
-
-  // 2 seconds
-  const int numsamples = samplerate*600;
-  const double freq = 1000;
   
   if (argc < 3) {
     std::cerr << "need two wav filenames" << std::endl;

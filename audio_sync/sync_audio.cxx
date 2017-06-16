@@ -71,8 +71,8 @@ int main(int argc, char** argv) {
 
   std::vector<correlation_data> correlations;
   mt.reset();
-  for(int i=0; i<wss.size(); i++) {
-    for (int j=i+1; j<wss.size(); j++) {
+  for(unsigned int i=0; i<wss.size(); i++) {
+    for (unsigned int j=i+1; j<wss.size(); j++) {
       correlation_data cd = correlate_wavs(wss[i], wss[j], fftsize, wss[i].samplerate);
       //std:: cout << wss[i].filename << " " << wss[j].filename << " offset " << offset << " num std " << num_std << std::endl;
       correlations.push_back(cd);
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
     });
 
   
-  for(int i=0; i<correlations.size(); i++) {
+  for(unsigned int i=0; i<correlations.size(); i++) {
     std:: cout << correlations[i].wss1->filename << " " << correlations[i].wss2->filename << " offset " << correlations[i].offset/double(correlations[i].wss1->samplerate) << " num std " << correlations[i].num_std << std::endl;
 
     correlation_data cd = correlations[i];

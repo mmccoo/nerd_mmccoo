@@ -4,7 +4,7 @@
 
 static int trackids = 0;
 track_data::track_data(tinyxml2::XMLElement* track_element, kdenlive_data &kdata) :
-  element(track_element), kdata(kdata), last_position(0) {
+  last_position(0), element(track_element), kdata(kdata) {
   id = trackids;
   trackids++;
   

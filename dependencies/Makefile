@@ -1,4 +1,7 @@
 
+# to build this, you need:
+# sudo apt install doxygen
+
 $(info in depdencies makefile)
 
 all: libsndfile-1.0.28/install/lib/libsndfile.a fftw-3.3.6-pl2/install/lib/libfftw3.a tinyxml2/libtinyxml2.a

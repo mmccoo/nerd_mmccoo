@@ -29,8 +29,10 @@ FFTW_PATH=../dependencies/fftw-3.3.6-pl2/install/lib/pkgconfig
 CFLAGS += $(shell export PKG_CONFIG_PATH=$(FFTW_PATH) && pkg-config --cflags fftw3)
 LFLAGS += $(shell export PKG_CONFIG_PATH=$(FFTW_PATH) && pkg-config --libs fftw3)
 
+# lpthread is needed for boost_regex
+LFLAGS += -L../dependencies/boost_1_63_0/install/lib -static -lboost_regex -lpthread
 
-TARGETS = xmltest sync_wavs varianceexample sync_audio sync_kdenlive
+TARGETS = xmltest sync_wavs varianceexample sync_audio sync_kdenlive regexcheck
 
 all: $(TARGETS)
 

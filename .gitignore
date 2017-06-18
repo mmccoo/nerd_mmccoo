@@ -14,6 +14,7 @@ audio_sync/sync_wavs
 audio_sync/sync_audio
 audio_sync/xmltest
 audio_sync/sync_kdenlive
+audio_sync/regexcheck
 **.avi
 **.o
 **.d

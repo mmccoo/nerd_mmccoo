@@ -49,6 +49,8 @@ struct correlation_data {
   correlation_data(wav_samples *wss1, wav_samples *wss2, int offset, double num_std) :
     wss1(wss1), wss2(wss2), offset(offset), num_std(num_std) { /* empty */ }
 
+  void write_wav(const std::string &filename);
+  
   wav_samples *wss1;
   wav_samples *wss2;
   int offset;

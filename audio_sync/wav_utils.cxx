@@ -222,3 +222,21 @@ mergeTimelines(std::shared_ptr<Timeline> tl1,
 
   tl2->getClips().clear();
 }
+
+void
+correlation_data::write_wav(const std::string &filename)
+{
+  int length = std::max(wss1->frames, wss2->frames+offset);
+
+  const int channels = 2;
+  std::vector<double> samples(length*channels, 0);
+
+  for(int i=0; i<wss1->frames; i++) {
+    samples[channels*i] = wss1->samples[i*wss1->channels];
+  }
+  for(int i=0; i<wss2->frames; i++) {
+    samples[channels*(i+offset)+1] = wss2->samples[i*wss2->channels];
+  }
+  
+  ::write_wav(samples, length, wss1->samplerate, channels, filename);
+}

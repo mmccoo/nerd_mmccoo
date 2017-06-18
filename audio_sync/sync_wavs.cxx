@@ -23,8 +23,6 @@
 
 int main(int argc, char** argv) {
 
-  const int samplerate = 44100;
-  
   if (argc < 3) {
     std::cerr << "need two wav filenames" << std::endl;
     exit(-1);

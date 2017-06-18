@@ -7,6 +7,8 @@
 #include <boost/foreach.hpp>
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
+#include <boost/regex.hpp>
+
 #include <libgen.h>
 #include <unistd.h>
 
@@ -17,10 +19,22 @@ int main(int argc, char** argv) {
   }
 
   std::string filename(argv[1]);
-  char path[filename.size()+1];
-  strcpy(path, filename.c_str());
-  std::string kdendir = dirname(path);
-  
+
+  std::string kdendir;
+  std::string basefilename;
+
+  {
+    boost::regex expr{"(.*?/?)([^/]+)(\\.kdenlive)"};
+    boost::smatch what;
+    if (boost::regex_search(filename, what, expr)) {
+      kdendir = what[1];
+      basefilename = what[2];
+    } else {
+      std::cerr << "able to parse filename " << filename << std::endl;
+      exit(-1);
+    }
+  }
+    
   tinyxml2::XMLDocument doc;
   doc.LoadFile(filename.c_str());
 
@@ -107,7 +121,7 @@ int main(int argc, char** argv) {
   for(unsigned int i=0; i<clips.size(); i++) {
     for (unsigned int j=i+1; j<clips.size(); j++) {
       correlation_data cd = correlate_wavs(clips[i], clips[j], fftsize, clips[i].samplerate);
-      //std:: cout << wss[i].filename << " " << wss[j].filename << " offset " << offset << " num std " << num_std << std::endl;
+      //std:: cout << wss[i].resource << " " << wss[j].resource << " offset " << offset << " num std " << num_std << std::endl;
       correlations.push_back(cd);
     }
   }
@@ -118,7 +132,7 @@ int main(int argc, char** argv) {
     });
 
   for(unsigned int i=0; i<correlations.size(); i++) {
-    std:: cout << correlations[i].wss1->filename << " " << correlations[i].wss2->filename << " offset " << correlations[i].offset/double(correlations[i].wss1->samplerate) << " num std " << correlations[i].num_std << std::endl;
+    std:: cout << correlations[i].wss1->resource << " " << correlations[i].wss2->resource << " offset " << correlations[i].offset/double(correlations[i].wss1->samplerate) << " num std " << correlations[i].num_std << std::endl;
 
     correlation_data cd = correlations[i];
     // is the correlation reliable enough?
@@ -130,6 +144,20 @@ int main(int argc, char** argv) {
       continue;
     }
 
+
+    if (0) {
+      std::string newfile = "correlated_" + std::to_string(i)
+        + "_" + correlations[i].wss1->resource
+        + "_" + correlations[i].wss2->resource
+        + ".wav";
+      for(auto iter = newfile.begin(); iter!=newfile.end(); iter++) {
+        if ((*iter) == '/') {
+          *iter = '_';
+        }        
+      }       
+      correlations[i].write_wav(kdendir + "/" + newfile);
+    }
+                              
     long int tl_offset1=0;
     if (!cd.wss1->timeline) {
       std::shared_ptr<Timeline> timeline(new Timeline());
@@ -216,6 +244,6 @@ int main(int argc, char** argv) {
   }
 
   
-  doc.SaveFile((filename + std::string(".new")).c_str());
-
+  doc.SaveFile((kdendir + "/" + basefilename + "_aligned" + std::string(".kdenlive")).c_str());
+  
 }

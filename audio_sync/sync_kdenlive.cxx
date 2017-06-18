@@ -239,7 +239,8 @@ int main(int argc, char** argv) {
       clipnum++;
     }
 
-    write_wav(samples, length, samplerate, channels, std::string("aligned") + std::to_string(tlnum) + ".wav");
+    write_wav(samples, length, samplerate, channels,
+              kdendir + "/" + basefilename + "_aligned" + std::to_string(tlnum) + ".wav");
     tlnum++;
   }
 

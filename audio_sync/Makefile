@@ -18,7 +18,7 @@ CXX = g++
 
 
 # I'm using isystem for boost to avoid warnings that originate from there.
-CFLAGS = -Wall -g -I. -std=c++14 -I../dependencies/tinyxml2 -isystem../dependencies/boost_1_63_0
+CFLAGS = -Wall -O3 -I. -std=c++14 -I../dependencies/tinyxml2 -isystem../dependencies/boost_1_63_0
 
 # to get the dependencies, cd to ../dependencies and do make all
 SNDFILE_PATH=../dependencies/libsndfile-1.0.28/install/lib/pkgconfig

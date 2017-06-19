@@ -46,8 +46,12 @@ struct wav_samples {
 };
 
 struct correlation_data {
+  correlation_data() :
+    wss1(0x0), wss2(0x0), offset(0),
+    num_std(0), cross_correlation(0x0) { /* empty */ }
   correlation_data(wav_samples *wss1, wav_samples *wss2, int offset, double num_std) :
-    wss1(wss1), wss2(wss2), offset(offset), num_std(num_std) { /* empty */ }
+    wss1(wss1), wss2(wss2), offset(offset),
+    num_std(num_std), cross_correlation(0) { /* empty */ }
 
   void write_wav(const std::string &filename);
   
@@ -55,6 +59,8 @@ struct correlation_data {
   wav_samples *wss2;
   int offset;
   double num_std;
+
+  std::complex<double> *cross_correlation;
   
 };
 
@@ -115,7 +121,8 @@ correlation_data
 correlate_wavs(wav_samples& ws1,
                wav_samples& ws2,
                long int     fftsize,
-               int          samplerate);
+               int          samplerate,
+               bool         savecrosscorrelation=false);
 
 
 std::ostream&

@@ -137,7 +137,8 @@ correlation_data
 correlate_wavs(wav_samples& ws1,
                wav_samples& ws2,
                long int     fftsize,
-               int          samplerate)
+               int          samplerate,
+               bool         savecrosscorrelation)
 {
   std::complex<double> *in  = (std::complex<double>*) fftw_malloc(sizeof(std::complex<double>) * fftsize);
   std::complex<double> *out = (std::complex<double>*) fftw_malloc(sizeof(std::complex<double>) * fftsize);
@@ -186,13 +187,26 @@ correlate_wavs(wav_samples& ws1,
   // the max correlation id will be positive if the first input ahead of the second.
   // this doesn't appear to really be true. rather, it's the reverse.
   // ie if in1(t) ~= in2(t+maxcorrel_id)
-
+  correlation_data retval;
+  
   if (maxid>fftsize/2) {
     // the order to correlation data matters.
-    return correlation_data(&ws1, &ws2, fftsize-maxid, num_std);
+    retval = correlation_data(&ws1, &ws2, fftsize-maxid, num_std);
+    if (savecrosscorrelation) {
+      // since I'm swapping the order of ws1 and ws2, the output fft needs to be reversed.
+      std::reverse(out, out+fftsize);
+    }
   } else {
-    return correlation_data(&ws2, &ws1, maxid,         num_std);
+    retval = correlation_data(&ws2, &ws1, maxid,         num_std);
   }
+
+  if (savecrosscorrelation) {
+    retval.cross_correlation = out;
+  } else {
+    fftw_free(out);
+  }
+  
+  return retval;
 }
 
 

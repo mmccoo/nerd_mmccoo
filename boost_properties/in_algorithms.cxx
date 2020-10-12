@@ -276,7 +276,7 @@ void example3()
 
   std::map<MyBareGraphType::vertex_descriptor, MyBareGraphType::vertex_descriptor> preds;
   my_predmap predmap(preds);
-  std::vector<int> dists;
+  std::vector<int> dists(boost::num_vertices(G));
   my_distmap distmap(G, dists);
   std::map<MyBareGraphType::edge_descriptor, int> weights;
   my_weightmap weightmap(weights);
